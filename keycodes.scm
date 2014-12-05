@@ -27,3 +27,8 @@
 (define key-y 28)
 (define key-z 29)
 (define key-semicolon 51)
+
+(define mod-ctrl #x01)
+(define mod-shift #x02)
+(define mod-alt #x04)
+(define mod-gui #x08)
