@@ -2,7 +2,7 @@
 
 A firmware for the
 [Atreus](http://atreus.technomancy.us) keyboard, written in
-[Microscheme](http://www.suchocki.co.uk/microscheme/).
+[Microscheme](http://ryansuchocki.github.io/microscheme/).
 
 Written in an incremental style. Requires microscheme newer than 0.8; at
 the time of this writing only available on git master.
