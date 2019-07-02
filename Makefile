@@ -12,6 +12,8 @@ upload: $(TARGET).hex
 	while [ ! -r $(USB_DEVICE) ]; do sleep 1; done; \
 	avrdude -p $(MCU) -c avr109 -U flash:w:$(TARGET).hex -P $(USB_DEVICE)
 
+test: ; racket test.rkt
+
 clean:
 	-rm -f $(TARGET){,.hex} *.o *.elf *.s
 
@@ -28,3 +30,5 @@ $(TARGET).hex: $(TARGET).elf
 usb_keyboard.s: usb_keyboard.h usb_keyboard.c
 	avr-gcc -std=gnu99 -S -D F_CPU=$(F_CPU)UL -mmcu=$(MCU) -c \
 	  -o usb_keyboard.s usb_keyboard.c
+
+.PHONY: build upload test clean
