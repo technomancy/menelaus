@@ -8,7 +8,6 @@
 
 (define max-keys 6) ; a single USB frame can only send 6 keycodes plus modifiers
 
-
 ;;; matrix
 
 (define (offset-for row col)
@@ -43,7 +42,24 @@
                                     (car rows-left) columns)))
         (scan-matrix keys-pressed key-count (cdr rows-left)))))
 
-
+;;; debouncing
+
+(define this-scan (vector 0 0 0 0 0 0 0))
+(define last-scan (vector 0 0 0 0 0 0 0))
+
+(define debounce-passes 8)
+
+(define (debounce-matrix keys-pressed last-count passes-left)
+  (vector-copy this-scan last-scan 0 6 0)
+  (if (< 0 passes-left)
+      (let ((this-count (scan-matrix this-scan 1 rows)))
+        (if (and (= this-count last-count)
+                 (equal? this-scan last-scan))
+            (debounce-matrix keys-pressed this-count (- passes-left 1))
+            (debounce-matrix keys-pressed this-count passes-left)))
+      (begin (vector-copy this-scan keys-pressed 0 6 0)
+             last-count)))
+
 ;;; layout
 
 (define (keycode-for keys-pressed which-key keycodes)
@@ -65,7 +81,6 @@
             #f)
         (keycodes-for keys-pressed (- key-count 1) keycodes))))
 
-
 ;;; showtime
 
 (define (init)
@@ -85,7 +100,7 @@
            ;; scanning the matrix tells us only which physical keys were
            ;; pressed and how many; it doesn't tell us which keycodes to
            ;; send yet.
-           (let ((key-count (scan-matrix keys-pressed 1 rows)))
+           (let ((key-count (debounce-matrix keys-pressed 1 debounce-passes)))
              (apply usb-send (keycodes-for keys-pressed (- key-count 1)
                                            (vector 0 0 0 0 0 0 0))))))
   (loop))

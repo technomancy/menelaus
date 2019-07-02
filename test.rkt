@@ -16,6 +16,11 @@
 ;; microscheme has this as a separate form but it's just for
 (define (for-each-vector f v) (for ([x v]) (f x)))
 
+(define (vector-copy src dest src-start src-finish dest-start)
+  ;; ignore src-start and dest-start
+  (for ([i (range src-finish)])
+    (vector-set! dest i (vector-ref src i))))
+
 (define last-usb-frame #f) ; save this off so we can test it
 
 (define (call-c-func f-name . args)
