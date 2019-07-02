@@ -12,6 +12,6 @@ for Teensy models will be added later.
 
 ## License
 
-Copyright © 2014 Phil Hagelberg and contributors
+Copyright © 2014-2019 Phil Hagelberg and contributors
 
 Released under the [GNU GPL version 3](https://www.gnu.org/licenses/gpl.html).
