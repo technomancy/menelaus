@@ -41,7 +41,10 @@
   (include "keycodes.scm")
   ;; pair of pins/keycodes
   `(((1) . (0 ,key-w 0 0 0 0 0))
-    ((2) . (0 ,key-e 0 0 0 0 0))))
+    ((2) . (0 ,key-e 0 0 0 0 0))
+    ((27) . (4 0 0 0 0 0 0))
+    ((36 4) . (2 ,key-t 0 0 0 0 0))
+    ((36 4 6) . (2 ,key-t ,key-y 0 0 0 0))))
 
 (define test-data (make-test-data))
 

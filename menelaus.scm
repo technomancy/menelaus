@@ -54,12 +54,22 @@
 (define (layout-lookup key-position)
   (vector-ref layout key-position))
 
+(define (keycode-for keys-pressed key-count keycodes)
+  (let ((code (vector-ref layout (vector-ref keys-pressed key-count))))
+    ;; (printf "keycode ~s ~s~n" code key-count)
+    (if (modifier? code)
+        (begin (vector-set! keycodes 0 (+ (vector-ref keycodes 0)
+                                          (unmodify code)))
+               #f)
+        code)))
+
 (define (keycodes-for keys-pressed key-count keycodes)
   (if (= 0 key-count)
       (vector->list keycodes)
-      (let ((keycode (vector-ref layout (vector-ref keys-pressed key-count))))
-        ;; (printf "keycode ~s ~s~n" keycode key-count)
-        (vector-set! keycodes key-count keycode)
+      (let ((keycode (keycode-for keys-pressed key-count keycodes)))
+        (if keycode
+            (vector-set! keycodes key-count keycode)
+            #f)
         (keycodes-for keys-pressed (- key-count 1) keycodes))))
 
 (define (loop)

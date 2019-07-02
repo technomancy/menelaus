@@ -40,8 +40,12 @@
 (define key-tab 43)
 (define key-enter 40)
 
-(define mod-ctrl #x01)
-(define mod-shift #x02)
-(define mod-alt #x04)
-(define mod-gui #x08)
-(define mod-fn #x16)
+(define (modifier? keycode) (list? keycode))
+(define (modify keycode) (list keycode))
+(define (unmodify keycode) (car keycode))
+
+(define mod-ctrl (modify #x01))
+(define mod-shift (modify #x02))
+(define mod-alt (modify #x04))
+(define mod-gui (modify #x08))
+(define mod-fn (modify #x16))
