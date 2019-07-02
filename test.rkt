@@ -1,24 +1,29 @@
 #lang racket
 
+;; this file simulates the hardware necessary to test the keyboard firmware,
+;; because doing actual development on an atmega32u4 is nightmarishly tedious.
+
 (define pins (make-vector 20))
 (define keys (make-vector 44 #f))
 
-(define output void)
+(define output void) ; don't bother to simulate pin modes
 (define input void)
 (define pause void)
 
 (define (high pin) (vector-set! pins pin #t))
 (define (low pin) (vector-set! pins pin #f))
 
+;; microscheme has this as a separate form but it's just for
 (define (for-each-vector f v) (for ([x v]) (f x)))
 
-(define last-usb-frame #f)
+(define last-usb-frame #f) ; save this off so we can test it
 
 (define (call-c-func f-name . args)
   ;; (printf "FFI ~s~n" args)
   (set! last-usb-frame args))
 
 (define (active-row)
+  ;; hypothetically we could have multiple active rows but we just assume one
   (for/first ([pin row-pins]
               [row (range (length rows))]
               #:when (not (vector-ref pins pin)))
@@ -48,24 +53,29 @@
 
 (define test-data (make-test-data))
 
-(define failures 0)
+(define failures '())
 
 (define (fail expected actual)
-  (set! failures (add1 failures))
-  (printf "Expected ~s, got ~s~n" expected actual))
+  (printf "F")
+  (set! failures
+        (cons (format "Expected ~s, got ~s~n" expected actual) failures)))
+
+(define (finish)
+  (printf (string-join failures "~n" #:before-first "~n" #:after-last "~n"))
+  (exit (if (empty? failures) 0 1)))
 
 ;; we can perform our checks here and make changes to the pin state.
 (define-syntax free!
   (syntax-rules ()
     [(free! body) (if (empty? test-data)
-                      (exit (if (= 0 failures) 0 1))
+                      (finish)
                       (let ([test-case (car test-data)])
                         (for ([i (vector-length keys)])
                           (vector-set! keys i
                                        (and (member i (car test-case)) #t)))
                         body
                         (if (equal? (cdr test-case) last-usb-frame)
-                            (printf ".~n")
+                            (printf ".")
                             (fail (cdr test-case) last-usb-frame))
                         (set! test-data (cdr test-data))))]))
 
