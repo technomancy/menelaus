@@ -40,6 +40,9 @@
 (define key-tab 43)
 (define key-enter 40)
 
+(define key-backslash 49)
+(define key-backtick 53)
+
 (define (modifier? keycode) (list? keycode))
 (define (modify keycode) (list keycode))
 (define (unmodify keycode) (car keycode))
