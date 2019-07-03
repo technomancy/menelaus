@@ -22,11 +22,11 @@
          key-a key-s key-d key-f key-g key-backtick
          key-h key-j key-k key-l key-semicolon
 
-         key-z key-x key-c key-v key-b mod-alt
+         key-z key-x key-c key-v key-b mod-ctrl
          key-n key-m key-comma key-period key-slash
 
-         key-esc key-tab mod-super mod-shift key-backspace mod-ctrl
-         key-space fn key-quote key-right-bracket key-enter))
+         key-esc key-tab mod-super mod-shift key-backspace mod-alt
+         key-space fn key-quote key-left-bracket key-enter))
 
 (vector-set!
  layers 1
@@ -39,11 +39,11 @@
          key-page-down key-4 key-5 key-6 (combo mod-shift key-right-bracket)
 
          key-dash key-equal (combo mod-shift key-9)
-         (combo mod-shift key-0) (combo mod-shift key-7) mod-alt
+         (combo mod-shift key-0) (combo mod-shift key-7) mod-ctrl
          key-backtick key-1 key-2 key-3 key-backslash
 
-         set-layer-2 key-insert mod-super mod-shift key-backspace mod-ctrl
-         key-space fn key-dash key-e key-0 key-right-bracket))
+         set-layer-2 key-insert mod-super mod-shift key-backspace mod-alt
+         key-space fn key-e key-0 key-right-bracket))
 
 (vector-set!
  layers 2 ; TODO

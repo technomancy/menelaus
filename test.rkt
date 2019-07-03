@@ -52,10 +52,10 @@
     ((2) . (0 ,key-e 0 0 0 0 0))
     ;; multiple normal keys
     ((2 3) . (0 ,key-e ,key-r 0 0 0 0))
-    ;; modifier keys (alt)
-    ((27) . (4 0 0 0 0 0 0))
-    ;; two modifiers (shift+alt) get ORed together
-    ((27 36) . (6 0 0 0 0 0 0))
+    ;; modifier keys (ctrl)
+    ((27) . (1 0 0 0 0 0 0))
+    ;; two modifiers (shift+ctrl) get ORed together
+    ((27 36) . (3 0 0 0 0 0 0))
     ;; modifier (shift) and normal key
     ((36 4) . (2 ,key-t 0 0 0 0 0))
     ;; modifier and multiple normal keys
