@@ -4,13 +4,13 @@ F_CPU=16000000
 
 TARGET=menelaus
 
-USB_DEVICE=/dev/ttyACM0
+USB=/dev/ttyACM0
 
 build: $(TARGET).hex
 
 upload: $(TARGET).hex
-	while [ ! -r $(USB_DEVICE) ]; do sleep 1; done; \
-	avrdude -p $(MCU) -c avr109 -U flash:w:$(TARGET).hex -P $(USB_DEVICE)
+	while [ ! -r $(USB) ]; do sleep 1; done; \
+	avrdude -p $(MCU) -c avr109 -U flash:w:$(TARGET).hex -P $(USB)
 
 test: ; racket test.rkt
 

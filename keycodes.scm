@@ -48,6 +48,7 @@
 (define key-home 74)
 (define key-end 77)
 (define key-insert 73)
+(define key-delete 76)
 
 (define key-semicolon 51)
 (define key-comma 54)
@@ -71,6 +72,23 @@
 (define key-vol-up 128)
 (define key-vol-down 129)
 
+(define key-f1 58)
+(define key-f2 59)
+(define key-f3 60)
+(define key-f4 61)
+(define key-f5 62)
+(define key-f6 63)
+(define key-f7 64)
+(define key-f8 65)
+(define key-f9 66)
+(define key-f10 67)
+(define key-f11 68)
+(define key-f12 69)
+
+(define key-printscreen 70)
+(define key-scroll-lock 71) ; lol
+(define key-pause 72)
+
 (define (modifier? keycode) (list? keycode))
 (define (modify keycode) (list keycode))
 (define (unmodify keycode) (car keycode))
@@ -83,3 +101,5 @@
 (define mod-shift (modify #x02))
 (define mod-alt (modify #x04))
 (define mod-super (modify #x08))
+
+(define (sft keycode) (combo mod-shift keycode)) ; shorthand
