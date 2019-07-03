@@ -26,13 +26,38 @@
 (define key-x 27)
 (define key-y 28)
 (define key-z 29)
-(define key-semicolon 51)
 
+(define key-1 30)
+(define key-2 31)
+(define key-3 32)
+(define key-4 33)
+(define key-5 34)
+(define key-6 35)
+(define key-7 36)
+(define key-8 37)
+(define key-9 38)
+(define key-0 39)
+
+(define key-up 82)
+(define key-down 81)
+(define key-left 80)
+(define key-right 79)
+
+(define key-page-up 75)
+(define key-page-down 78)
+(define key-home 74)
+(define key-end 77)
+(define key-insert 73)
+
+(define key-semicolon 51)
 (define key-comma 54)
 (define key-period 55)
 (define key-slash 56)
 (define key-dash 45)
 (define key-quote 52)
+(define key-equal 46)
+(define key-left-bracket 47)
+(define key-right-bracket 48)
 
 (define key-space 44)
 (define key-backspace 42)
@@ -43,12 +68,18 @@
 (define key-backslash 49)
 (define key-backtick 53)
 
+(define key-vol-up 128)
+(define key-vol-down 129)
+
 (define (modifier? keycode) (list? keycode))
 (define (modify keycode) (list keycode))
 (define (unmodify keycode) (car keycode))
 
+;; currently you can only combo with one modifier and one normal key
+(define (combo modifier keycode) (list (car modifier) keycode))
+(define (uncombo keycode) (and (= 2 (length keycode)) (car (cdr keycode))))
+
 (define mod-ctrl (modify #x01))
 (define mod-shift (modify #x02))
 (define mod-alt (modify #x04))
-(define mod-gui (modify #x08))
-(define mod-fn (modify #x16))
+(define mod-super (modify #x08))

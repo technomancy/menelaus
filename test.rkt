@@ -13,13 +13,8 @@
 (define (high pin) (vector-set! pins pin #t))
 (define (low pin) (vector-set! pins pin #f))
 
-;; microscheme has this as a separate form but it's just for
-(define (for-each-vector f v) (for ([x v]) (f x)))
-
-(define (vector-copy src dest src-start src-finish dest-start)
-  ;; ignore src-start and dest-start
-  (for ([i (range src-finish)])
-    (vector-set! dest i (vector-ref src i))))
+;; microscheme has this as a separate form
+(define for-each-vector vector-map)
 
 (define last-usb-frame #f) ; save this off so we can test it
 
@@ -49,12 +44,31 @@
 (define (make-test-data)
   ;; have to put this in a function so we can internal-define; eww
   (include "keycodes.scm")
-  ;; pair of pins/keycodes
-  `(((1) . (0 ,key-w 0 0 0 0 0))
+  ;; each test case is a pair of inputs->outputs
+  ;; inputs are a list of keys (by offset), outputs are elements of a USB frame
+  `(;; single key
+    ((3) . (0 ,key-r 0 0 0 0 0))
+    ;; another single key
     ((2) . (0 ,key-e 0 0 0 0 0))
+    ;; multiple normal keys
+    ((2 3) . (0 ,key-e ,key-r 0 0 0 0))
+    ;; modifier keys (alt)
     ((27) . (4 0 0 0 0 0 0))
+    ;; two modifiers (shift+alt) get ORed together
+    ((27 36) . (6 0 0 0 0 0 0))
+    ;; modifier (shift) and normal key
     ((36 4) . (2 ,key-t 0 0 0 0 0))
-    ((36 4 6) . (2 ,key-t ,key-y 0 0 0 0))))
+    ;; modifier and multiple normal keys
+    ((36 4 6) . (2 ,key-t ,key-y 0 0 0 0))
+    ;; fn key alone
+    ((40) . (0 0 0 0 0 0 0))
+    ;; fn key and normal key
+    ((40 1) . (2 ,key-2 0 0 0 0 0))
+    ;; fn key and modifier and normal key
+    ((40 35 2) . (8 ,key-up 0 0 0 0 0))
+    ;; releasing fn should leave the previously-pressed key on the fn layer!!!
+    ;; ((2) . (0 ,key-up 0 0 0 0 0))
+    ))
 
 (define test-data (make-test-data))
 

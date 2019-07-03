@@ -8,7 +8,7 @@
 
 (define max-keys 6) ; a single USB frame can only send 6 keycodes plus modifiers
 
-;;; matrix
+;;;;;;;;;;;;;;;;;;; matrix
 
 (define (offset-for row col)
   (+ col (* row (length columns))))
@@ -42,7 +42,7 @@
                                     (car rows-left) columns)))
         (scan-matrix keys-pressed key-count (cdr rows-left)))))
 
-;;; debouncing
+;;;;;;;;;;;;;;;;;;; debouncing
 
 (define this-scan (vector 0 0 0 0 0 0 0))
 (define last-scan (vector 0 0 0 0 0 0 0))
@@ -50,29 +50,46 @@
 (define debounce-passes 8)
 
 (define (debounce-matrix keys-pressed last-count passes-left)
-  (vector-copy this-scan last-scan 0 6 0)
+  ;; older versions of microscheme don't have vector-copy!, only vector-copy
+  ;; which does the same thing but takes the arguments in a different order
+  (vector-copy! last-scan 0 this-scan 0 6)
   (if (< 0 passes-left)
       (let ((this-count (scan-matrix this-scan 1 rows)))
         (if (and (= this-count last-count)
                  (equal? this-scan last-scan))
             (debounce-matrix keys-pressed this-count (- passes-left 1))
             (debounce-matrix keys-pressed this-count passes-left)))
-      (begin (vector-copy this-scan keys-pressed 0 6 0)
+      (begin (vector-copy! keys-pressed 0 this-scan 0 6)
              last-count)))
 
-;;; layout
+;;;;;;;;;;;;;;;;;;; layout
+
+(define (lookup keys-pressed which-key)
+  (let ((layout (or momentary-layer current-layer)))
+    (vector-ref layout (vector-ref keys-pressed which-key))))
 
 (define (keycode-for keys-pressed which-key keycodes)
-  (let ((code (vector-ref layout (vector-ref keys-pressed which-key))))
+  (let ((code (lookup keys-pressed which-key)))
     ;; (printf "keycode ~s ~s~n" code which-key)
     (if (modifier? code)
         (begin (vector-set! keycodes 0 (+ (vector-ref keycodes 0)
                                           (unmodify code)))
-               #f)
-        code)))
+               (uncombo code))
+        (and (not (procedure? code)) code))))
+
+(define (call-functions keys-pressed key-count)
+  (if (< 0 key-count)
+      (let ((code (lookup keys-pressed key-count)))
+        (if (procedure? code)
+            (code)
+            #f)
+        (call-functions keys-pressed (- key-count 1)))
+      #f))
 
 ;; translate key numbers into specific USB keycodes
 (define (keycodes-for keys-pressed key-count keycodes)
+  ;; this happens before we look up "regular" keycodes because it changes layers
+  (call-functions keys-pressed key-count)
   (if (= 0 key-count)
       (vector->list keycodes)
       (let ((keycode (keycode-for keys-pressed key-count keycodes)))
@@ -81,9 +98,10 @@
             #f)
         (keycodes-for keys-pressed (- key-count 1) keycodes))))
 
-;;; showtime
+;;;;;;;;;;;;;;;;;;; showtime
 
 (define (init)
+  (set-layer-0)
   (for-each-vector output row-pins)
   (for-each-vector high row-pins)
   (for-each-vector input column-pins)
@@ -96,6 +114,7 @@
   (call-c-func "usb_send" modifiers key1 key2 key3 key4 key5 key6))
 
 (define (loop)
+  (set! momentary-layer #f)
   (free! (let ((keys-pressed (vector 0 0 0 0 0 0 0)))
            ;; scanning the matrix tells us only which physical keys were
            ;; pressed and how many; it doesn't tell us which keycodes to
