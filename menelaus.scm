@@ -6,70 +6,61 @@
 (define columns (list 0 1 2 3 4 5 6 7 8 9 10))
 (define column-pins (vector 6 5 9 8 7 4 10 19 18 12 11))
 
-(define max-keys 6) ; a single USB frame can only send 6 keycodes plus modifiers
+(define max-keys 10) ; single USB frame can only send 6 keycodes plus modifiers
 
 ;;;;;;;;;;;;;;;;;;; matrix
 
 (define (offset-for row col)
   (+ col (* row (length columns))))
 
-(define (scan-key keys-pressed key-count row col)
-  ;; pullup resistors mean a closed circuit is low rather than high
-  (if (low? (vector-ref column-pins col))
-      (if (<= key-count max-keys)
-          (begin
-            (vector-set! keys-pressed key-count (offset-for row col))
-            (+ key-count 1))
-          key-count)
-      key-count))
+(define (scan-key scan row col)
+  (if (and (< (length scan) max-keys)
+           ;; pullup resistors mean a closed circuit is low rather than high
+           (low? (vector-ref column-pins col)))
+      (cons (offset-for row col) scan)
+      scan))
 
-(define (scan-column keys-pressed key-count row columns-left)
-  (if (= (length columns-left) 0)
-      key-count
-      (let ((key-count (scan-key keys-pressed key-count
-                                 row (car columns-left))))
-        (scan-column keys-pressed key-count row (cdr columns-left)))))
+(define (scan-column scan row columns-left)
+  (if (empty? columns-left)
+      scan
+      (scan-column (scan-key scan row (car columns-left))
+                   row (cdr columns-left))))
 
 (define (activate-row row)
   (for-each-vector high row-pins)
   (low (vector-ref row-pins row)))
 
-(define (scan-matrix keys-pressed key-count rows-left)
-  (if (= (length rows-left) 0)
-      key-count
-      (let ((_ (activate-row (car rows-left)))
-            (key-count (scan-column keys-pressed key-count
-                                    (car rows-left) columns)))
-        (scan-matrix keys-pressed key-count (cdr rows-left)))))
+(define (scan-matrix scan rows-left)
+  (if (empty? rows-left)
+      scan
+      (begin
+        (activate-row (car rows-left))
+        (scan-matrix (scan-column scan (car rows-left) columns)
+                     (cdr rows-left)))))
 
 ;;;;;;;;;;;;;;;;;;; debouncing
 
-(define this-scan (vector 0 0 0 0 0 0 0))
-(define last-scan (vector 0 0 0 0 0 0 0))
-
 (define debounce-passes 4)
 
-(define (debounce-matrix keys-pressed last-count passes-left)
-  ;; older versions of microscheme don't have vector-copy!, only vector-copy
-  ;; which does the same thing but takes the arguments in a different order
-  (vector-copy! last-scan 0 this-scan 0 6)
+(define (debounce-matrix-aux last-scan passes-left)
   (if (< 0 passes-left)
-      (let ((this-count (scan-matrix this-scan 1 rows)))
-        (if (and (= this-count last-count)
-                 (equal? this-scan last-scan))
-            (debounce-matrix keys-pressed this-count (- passes-left 1))
-            (debounce-matrix keys-pressed this-count passes-left)))
-      (begin (vector-copy! keys-pressed 0 this-scan 0 6)
-             last-count)))
+      (let ((this-scan (scan-matrix (list) rows)))
+        (if (equal? this-scan last-scan)
+            (debounce-matrix-aux this-scan (- passes-left 1))
+            (debounce-matrix-aux this-scan debounce-passes)))
+      last-scan))
+
+(define (debounce-matrix)
+  (debounce-matrix-aux (list) debounce-passes))
 
 ;;;;;;;;;;;;;;;;;;; layout
 
-(define (lookup keys-pressed which-key)
+(define (lookup key-pos)
   (let ((layout (or momentary-layer current-layer)))
-    (vector-ref layout (vector-ref keys-pressed which-key))))
+    (vector-ref layout key-pos)))
 
-(define (keycode-for keys-pressed which-key keycodes)
-  (let ((code (lookup keys-pressed which-key)))
+(define (keycode-for key-pos keycodes)
+  (let ((code (lookup key-pos)))
     ;; (printf "keycode ~s ~s~n" code which-key)
     (if (modifier? code)
         (begin (vector-set! keycodes 0 (+ (vector-ref keycodes 0)
@@ -77,23 +68,28 @@
                (uncombo code))
         (and (not (procedure? code)) code))))
 
-(define (call-functions keys-pressed key-count)
-  (if (< 0 key-count)
-      (let ((code (lookup keys-pressed key-count)))
+(define (call-functions keys-scanned)
+  (if (empty? keys-scanned)
+      #f
+      (let ((code (lookup (car keys-scanned))))
         (and (procedure? code) (code))
-        (call-functions keys-pressed (- key-count 1)))
-      #f))
+        (call-functions (cdr keys-scanned)))))
+
+(define (first-zero v n)
+  (if (or (= 0 (vector-ref v n)) (= 6 n))
+      n
+      (first-zero v (+ n 1))))
 
 ;; translate key numbers into specific USB keycodes
-(define (keycodes-for keys-pressed key-count keycodes)
+(define (keycodes-for keys-scanned keycodes)
   ;; this happens before we look up "regular" keycodes because it changes layers
-  (call-functions keys-pressed key-count)
-  (if (= 0 key-count)
+  (call-functions keys-scanned)
+  (if (empty? keys-scanned)
       (vector->list keycodes)
-      (let ((keycode (keycode-for keys-pressed key-count keycodes)))
+      (let ((keycode (keycode-for (car keys-scanned) keycodes)))
         (and keycode
-             (vector-set! keycodes key-count keycode))
-        (keycodes-for keys-pressed (- key-count 1) keycodes))))
+             (vector-set! keycodes (first-zero keycodes 1) keycode))
+        (keycodes-for (cdr keys-scanned) keycodes))))
 
 ;;;;;;;;;;;;;;;;;;; showtime
 
@@ -112,13 +108,10 @@
 
 (define (loop)
   (set! momentary-layer #f)
-  (free! (let ((keys-pressed (vector 0 0 0 0 0 0 0)))
-           ;; scanning the matrix tells us only which physical keys were
-           ;; pressed and how many; it doesn't tell us which keycodes to
-           ;; send yet.
-           (let ((key-count (debounce-matrix keys-pressed 1 debounce-passes)))
-             (apply usb-send (keycodes-for keys-pressed (- key-count 1)
-                                           (vector 0 0 0 0 0 0 0))))))
+  ;; scanning the matrix tells us only which physical keys were pressed and
+  ;; how many; it doesn't tell us which keycodes to send yet.
+  (free! (let ((keys-scanned (debounce-matrix)))
+           (apply usb-send (keycodes-for keys-scanned (vector 0 0 0 0 0 0 0)))))
   (loop))
 
 (init)

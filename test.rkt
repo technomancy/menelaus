@@ -51,7 +51,7 @@
     ;; another single key
     ((2) . (0 ,key-e 0 0 0 0 0))
     ;; multiple normal keys
-    ((2 3) . (0 ,key-e ,key-r 0 0 0 0))
+    ((2 3) . (0 ,key-r ,key-e 0 0 0 0))
     ;; modifier keys (ctrl)
     ((27) . (1 0 0 0 0 0 0))
     ;; two modifiers (shift+ctrl) get ORed together
@@ -59,7 +59,7 @@
     ;; modifier (shift) and normal key
     ((36 4) . (2 ,key-t 0 0 0 0 0))
     ;; modifier and multiple normal keys
-    ((36 4 6) . (2 ,key-t ,key-y 0 0 0 0))
+    ((36 4 6) . (2 ,key-y ,key-t 0 0 0 0))
     ;; fn key alone
     ((40) . (0 0 0 0 0 0 0))
     ;; fn key and normal key
