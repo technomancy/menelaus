@@ -11,8 +11,7 @@
 (define (set-layer n)
   (lambda () (set! current-layer (vector-ref layers n))))
 
-(define (reset)
-  #f) ;; TODO: uh, seriously. I need this. how.
+(define (reset) (call-c-func "reset"))
 
 ;;;; layers
 
