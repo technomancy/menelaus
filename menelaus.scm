@@ -16,11 +16,11 @@
 (define (scan-key keys-pressed key-count row col)
   ;; pullup resistors mean a closed circuit is low rather than high
   (if (low? (vector-ref column-pins col))
-      (begin
-        (if (<= key-count max-keys)
+      (if (<= key-count max-keys)
+          (begin
             (vector-set! keys-pressed key-count (offset-for row col))
-            #f)
-        (+ key-count 1))
+            (+ key-count 1))
+          key-count)
       key-count))
 
 (define (scan-column keys-pressed key-count row columns-left)
@@ -47,7 +47,7 @@
 (define this-scan (vector 0 0 0 0 0 0 0))
 (define last-scan (vector 0 0 0 0 0 0 0))
 
-(define debounce-passes 8)
+(define debounce-passes 4)
 
 (define (debounce-matrix keys-pressed last-count passes-left)
   ;; older versions of microscheme don't have vector-copy!, only vector-copy
@@ -80,9 +80,7 @@
 (define (call-functions keys-pressed key-count)
   (if (< 0 key-count)
       (let ((code (lookup keys-pressed key-count)))
-        (if (procedure? code)
-            (code)
-            #f)
+        (and (procedure? code) (code))
         (call-functions keys-pressed (- key-count 1)))
       #f))
 
@@ -93,15 +91,14 @@
   (if (= 0 key-count)
       (vector->list keycodes)
       (let ((keycode (keycode-for keys-pressed key-count keycodes)))
-        (if keycode
-            (vector-set! keycodes key-count keycode)
-            #f)
+        (and keycode
+             (vector-set! keycodes key-count keycode))
         (keycodes-for keys-pressed (- key-count 1) keycodes))))
 
 ;;;;;;;;;;;;;;;;;;; showtime
 
 (define (init)
-  (set-layer-0)
+  (set! current-layer (vector-ref layers 0))
   (for-each-vector output row-pins)
   (for-each-vector high row-pins)
   (for-each-vector input column-pins)

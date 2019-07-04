@@ -16,13 +16,13 @@ test: ; racket test.rkt
 
 clean: ; -rm -f $(TARGET){,.hex} *.o *.elf *.s
 
-count: ; cloc *.scm
+count: ; cloc menelaus.scm keycodes.scm
 
 $(TARGET).hex: $(TARGET).elf
 	avr-size $(TARGET).elf
 	avr-objcopy --output-target=ihex $(TARGET).elf $(TARGET).hex
 
-%.s: %.scm
+$(TARGET).s: $(TARGET).scm layout.scm keycodes.scm
 	microscheme -m LEO $(TARGET).scm
 
 %.elf: %.s usb_keyboard.s

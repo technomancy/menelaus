@@ -68,6 +68,16 @@
     ((40 35 2) . (8 ,key-up 0 0 0 0 0))
     ;; releasing fn should leave the previously-pressed key on the fn layer!!!
     ;; ((2) . (0 ,key-up 0 0 0 0 0))
+    ;; changing to L2 (fn+esc)
+    ((40 33) . (0 0 0 0 0 0 0))
+    ;; fn+esc should stay on L2 across multiple scans
+    ((40 33) . (0 0 0 0 0 0 0))
+    ;; hitting an L2 key
+    ;; ((1) . (0 ,key-home 0 0 0 0 0))
+    ;; back to base (key above esc)
+    ;; ((22) . (0 0 0 0 0 0 0))
+    ;; base layer key
+    ((2) . (0 ,key-e 0 0 0 0 0))
     ))
 
 (define test-data (make-test-data))
@@ -80,7 +90,8 @@
         (cons (format "Expected ~s, got ~s~n" expected actual) failures)))
 
 (define (finish)
-  (printf (string-join failures "~n" #:before-first "~n" #:after-last "~n"))
+  (printf (string-join (reverse failures)
+                       "~n" #:before-first "~n" #:after-last "~n"))
   (exit (if (empty? failures) 0 1)))
 
 ;; we can perform our checks here and make changes to the pin state.

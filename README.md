@@ -11,13 +11,15 @@ A firmware for the
 * Multiple layers, momentary and sticky (limited only by memory)
 * Combo keys (a single keystroke can send a modifier and a non-modifier)
 * Bind arbitrary Scheme functions to a key
-* ~255 lines of code
+* ~200 lines of code
 
 ## Usage
 
 This currently requires Microscheme with the addition of
-`vector-copy!` which at the time of this writing is only available on
-[this branch](https://github.com/ryansuchocki/microscheme/pull/31).
+`vector-copy!` which at the time of this writing is only on the master branch.
+
+Also requires [avrdude](https://www.nongnu.org/avrdude/) for uploading
+to the device.
 
 Replace `/dev/ttyACM0` with the path your OS assigns to the USB
 bootloader of the microcontroller:
@@ -37,6 +39,8 @@ into Racket and simulates the GPIO functions with a test harness:
     $ make test
 
 ## Known bugs
+
+Still working out some quirks with sticky layers.
 
 If you hold the fn key, press a button (say Q) and then release fn
 without releasing Q, it will send a keycode for Q rather than simply
