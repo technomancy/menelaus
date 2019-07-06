@@ -337,9 +337,10 @@ int8_t usb_keyboard_send(void)
 }
 
 // my own wrapper, mangled to work with the PoC microsheme FFI
-int16_t usb_send(int modifiers, int key0, int key1, int key2,
+int16_t usb_send(int ctrl, int shift, int alt, int gui,
+                 int key0, int key1, int key2,
                  int key3, int key4, int key5) {
-  keyboard_modifier_keys = (uint8_t) modifiers;
+  keyboard_modifier_keys = (uint8_t) (ctrl) | (shift<<1) | (alt<<2) | (gui<<3);
   keyboard_keys[0] = (uint8_t)key0;
   keyboard_keys[1] = (uint8_t)key1;
   keyboard_keys[2] = (uint8_t)key2;

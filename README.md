@@ -11,22 +11,19 @@ A firmware for the
 * Multiple layers, momentary and sticky (limited only by memory)
 * Combo keys (a single keystroke can send a modifier and a non-modifier)
 * Bind arbitrary Scheme functions to a key
-* ~200 lines of code
+* ~250 lines of code
 
 ## Usage
 
-This currently requires Microscheme with the addition of
-`vector-copy!` which at the time of this writing is only on the master branch.
-
-Also requires [avrdude](https://www.nongnu.org/avrdude/) for uploading
-to the device.
+This requires [avrdude](https://www.nongnu.org/avrdude/) for uploading
+to the controller on the keyboard; install with your package manager
+of choice.
 
 Replace `/dev/ttyACM0` with the path your OS assigns to the USB
-bootloader of the microcontroller:
+bootloader of the microcontroller (on Mac OS X sometimes it is
+`/dev/cu.usbmodem1411` or similar):
 
     $ make upload USB=/dev/ttyACM0
-
-On Mac OS X sometimes the USB path is `/dev/cu.usbmodem1411` or similar.
 
 Currently only the "multidvorak" layout is included.
 
@@ -37,14 +34,13 @@ microcontroller in the keyboard using `test.rkt` which loads it up
 into Racket and simulates the GPIO functions with a test harness:
 
     $ make test
+    racket test.rkt
+    ..........................
 
 ## Known bugs
 
-Still working out some quirks with sticky layers.
-
-If you hold the fn key, press a button (say Q) and then release fn
-without releasing Q, it will send a keycode for Q rather than simply
-leaving the previous fn+Q keycodes as held down.
+If you hold down two keys which contain a modifier (for instance,
+shift and !) and release one of them, it will count as if both are released.
 
 ## License
 

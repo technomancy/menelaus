@@ -97,9 +97,10 @@
 (define (combo modifier keycode) (list (car modifier) keycode))
 (define (uncombo keycode) (and (= 2 (length keycode)) (car (cdr keycode))))
 
-(define mod-ctrl (modify #x01))
-(define mod-shift (modify #x02))
-(define mod-alt (modify #x04))
-(define mod-super (modify #x08))
+;; we're treating these a little differently; they are not literal USB values
+(define mod-ctrl (modify 1))
+(define mod-shift (modify 2))
+(define mod-alt (modify 3))
+(define mod-super (modify 4))
 
 (define (sft keycode) (combo mod-shift keycode)) ; shorthand

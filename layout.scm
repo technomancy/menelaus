@@ -5,13 +5,12 @@
 (define current-layer #f)
 (define momentary-layer #f)
 
-(define (fn)
-  (set! momentary-layer (vector-ref layers 1)))
+(define (fn on?) (set! momentary-layer (and on? (vector-ref layers 1))))
 
 (define (set-layer n)
-  (lambda () (set! current-layer (vector-ref layers n))))
+  (lambda (_) (set! current-layer (vector-ref layers n))))
 
-(define (reset) (call-c-func "reset"))
+(define (reset _) (call-c-func "reset"))
 
 ;;;; layers
 
@@ -38,9 +37,7 @@
          key-dash key-equal (sft key-9) (sft key-0) (sft key-7) mod-ctrl
          key-backtick key-1 key-2 key-3 key-backslash
 
-         ;; still got some bugs in layering to work out! make this reset for now
-         reset ;; (set-layer 2)
-         key-insert mod-super mod-shift key-backspace mod-alt
+         (set-layer 2) key-insert mod-super mod-shift key-backspace mod-alt
          key-space fn key-e key-0 key-right-bracket))
 
 (define l2-layer
@@ -54,7 +51,7 @@
          (set-layer 4) key-f1 key-f2 key-f3 key-f12
 
          0 key-vol-down mod-super mod-shift key-backspace mod-alt
-         key-space 0 key-printscreen key-scroll-lock key-pause))
+         key-space (set-layer 0) key-printscreen key-scroll-lock key-pause))
 
 (define hard-dvorak-layer
  (vector key-quote key-comma key-period key-p key-y key-backslash

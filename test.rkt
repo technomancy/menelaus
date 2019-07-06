@@ -18,9 +18,16 @@
 
 (define last-usb-frame #f) ; save this off so we can test it
 
+(define (usb-save ctrl shift alt supr . args)
+  (set! last-usb-frame (cons (filter symbol? (list (if (= 1 ctrl) 'ctrl 0)
+                                                   (if (= 1 shift) 'shift 0)
+                                                   (if (= 1 alt) 'alt 0)
+                                                   (if (= 1 supr) 'super 0)))
+                             args)))
+
 (define (call-c-func f-name . args)
-  ;; (printf "FFI ~s~n" args)
-  (set! last-usb-frame args))
+  (when (equal? f-name "usb_send")
+    (apply usb-save args)))
 
 (define (active-row)
   ;; hypothetically we could have multiple active rows but we just assume one
@@ -47,38 +54,48 @@
   ;; each test case is a pair of inputs->outputs
   ;; inputs are a list of keys (by offset), outputs are elements of a USB frame
   `(;; single key
-    ((3) . (0 ,key-r 0 0 0 0 0))
+    ((3) . (() ,key-r))
     ;; another single key
-    ((2) . (0 ,key-e 0 0 0 0 0))
+    ((2) . (() ,key-e))
     ;; multiple normal keys
-    ((2 3) . (0 ,key-r ,key-e 0 0 0 0))
+    ((2 3) . (() ,key-r ,key-e))
     ;; modifier keys (ctrl)
-    ((27) . (1 0 0 0 0 0 0))
+    ((27) . ((ctrl)))
     ;; two modifiers (shift+ctrl) get ORed together
-    ((27 36) . (3 0 0 0 0 0 0))
+    ((27 36) . ((ctrl shift)))
     ;; modifier (shift) and normal key
-    ((36 4) . (2 ,key-t 0 0 0 0 0))
+    ((36 4) . ((shift) ,key-t))
     ;; modifier and multiple normal keys
-    ((36 4 6) . (2 ,key-y ,key-t 0 0 0 0))
+    ((36 4 6) . ((shift) ,key-t ,key-y))
     ;; fn key alone
-    ((40) . (0 0 0 0 0 0 0))
+    ((40) . (()))
     ;; fn key and normal key
-    ((40 1) . (2 ,key-2 0 0 0 0 0))
+    ((40 1) . ((shift) ,key-2))
     ;; fn key and modifier and normal key
-    ((40 35 2) . (8 ,key-up 0 0 0 0 0))
+    ((40 35 2) . ((super) ,key-up))
     ;; releasing fn should leave the previously-pressed key on the fn layer!!!
-    ;; ((2) . (0 ,key-up 0 0 0 0 0))
+    ((2) . (() ,key-up))
     ;; changing to L2 (fn+esc)
-    ((40 33) . (0 0 0 0 0 0 0))
+    ((40) . (()))
+    ((40 33) . (()))
     ;; fn+esc should stay on L2 across multiple scans
-    ((40 33) . (0 0 0 0 0 0 0))
+    ((40 33) . (()))
+    ;; release fn to disable momentary
+    (() . (()))
     ;; hitting an L2 key
-    ;; ((1) . (0 ,key-home 0 0 0 0 0))
-    ;; back to base (key above esc)
-    ;; ((22) . (0 0 0 0 0 0 0))
+    ((1) . (() ,key-home))
+    ;; L2 two keys and mod
+    ((36 39 18) . ((shift) ,key-f4 ,key-space))
+    ;; back to base (fn)
+    ((40) . (()))
     ;; base layer key
-    ((2) . (0 ,key-e 0 0 0 0 0))
-    ))
+    ((2) . (() ,key-e))
+    ;; shift combo and shift key simultaneously
+    ((40) . (()))
+    ((40 1 36) . ((shift) ,key-2))
+    ((40 1) . (() ,key-2))
+    ((40) . (()))
+    (() . (()))))
 
 (define test-data (make-test-data))
 
@@ -104,9 +121,12 @@
                           (vector-set! keys i
                                        (and (member i (car test-case)) #t)))
                         body
-                        (if (equal? (cdr test-case) last-usb-frame)
-                            (printf ".")
-                            (fail (cdr test-case) last-usb-frame))
+                        (let ((actual (cons (car last-usb-frame)
+                                            (remove-all
+                                             0 (cdr last-usb-frame)))))
+                          (if (equal? (cdr test-case) actual)
+                              (printf ".")
+                              (fail (cdr test-case) actual)))
                         (set! test-data (cdr test-data))))]))
 
 (include "menelaus.scm")
