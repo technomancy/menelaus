@@ -201,19 +201,18 @@
   (call-c-func "usb_init")
   (pause 200))
 
-(define (usb-send modifiers k0 k1 k2 k3 k4 k5)
+(define (usb-send m k0 k1 k2 k3 k4 k5)
   ;; call-c-func is a special form and cannot be applied
-  (call-c-func "usb_send"
-               (vector-ref modifiers 0) (vector-ref modifiers 1)
-               (vector-ref modifiers 2) (vector-ref modifiers 3)
-               k0 k1 k2 k3 k4 k5))
+  (let ((mods (+ (vector-ref m 0) (* (vector-ref m 1) 2)))) ; plus isn't variadic
+    (let ((mods (+ mods (+ (* (vector-ref m 2) 4) (* (vector-ref m 3) 8)))))
+      (call-c-func "usb_send" mods k0 k1 k2 k3 k4 k5))))
 
 (define (loop)
   ;; scanning the matrix tells us only which physical keys were pressed and
   ;; how many; it doesn't tell us which keycodes to send yet.
   (free! (let ((keys-scanned (debounce-matrix)))
            (set-usb-frame (press/release-for keys-scanned))
-           (apply usb-send modifiers (vector->list keycodes-down))))
+           (apply usb-send (cons modifiers (vector->list keycodes-down)))))
   (loop))
 
 (init)

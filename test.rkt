@@ -18,12 +18,14 @@
 
 (define last-usb-frame #f) ; save this off so we can test it
 
-(define (usb-save ctrl shift alt supr . args)
-  (set! last-usb-frame (cons (filter symbol? (list (if (= 1 ctrl) 'ctrl 0)
-                                                   (if (= 1 shift) 'shift 0)
-                                                   (if (= 1 alt) 'alt 0)
-                                                   (if (= 1 supr) 'super 0)))
-                             args)))
+(define (mods-list mods)
+  (filter symbol? (list (if (positive? (bitwise-and mods 1)) 'ctrl 0)
+                        (if (positive? (bitwise-and mods 2)) 'shift 0)
+                        (if (positive? (bitwise-and mods 4)) 'alt 0)
+                        (if (positive? (bitwise-and mods 8)) 'super 0))))
+
+(define (usb-save mods . args)
+  (set! last-usb-frame (cons (mods-list mods) args)))
 
 (define (call-c-func f-name . args)
   (when (equal? f-name "usb_send")
