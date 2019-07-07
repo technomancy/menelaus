@@ -154,8 +154,8 @@
 
 (define (press-normal-key keycode key)
   (let ((slot (find keycodes-down 0)))
-    (vector-set! keycodes-down slot keycode)
-    (vector-set! keys-for-frame slot key)))
+    (and slot (vector-set! keycodes-down slot keycode))
+    (and slot (vector-set! keys-for-frame slot key))))
 
 (define (press-key key)
   (let ((keycode (lookup key)))

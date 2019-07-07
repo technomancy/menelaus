@@ -92,6 +92,8 @@
     ((40) . (()))
     ;; base layer key
     ((2) . (() ,key-e))
+    ;; seven keys down
+    ((1 2 3 4 7 8 9) . (() ,key-e ,key-w ,key-r ,key-t ,key-u ,key-i))
     ;; shift combo and shift key simultaneously
     ((40) . (()))
     ((40 1 36) . ((shift) ,key-2))
