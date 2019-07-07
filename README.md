@@ -25,7 +25,14 @@ bootloader of the microcontroller (on Mac OS X sometimes it is
 
     $ make upload USB=/dev/ttyACM0
 
-Currently only the "multidvorak" layout is included.
+By default you get the "multidvorak" layout, but you can also build a
+qwerty layout:
+
+    $ cp qwerty.scm layout.scm
+    $ make upload USB=/dev/ttyACM0
+
+Or edit `layout.scm` to your liking; you can see a list of available
+keycodes in `keycodes.scm`.
 
 ## Development
 
