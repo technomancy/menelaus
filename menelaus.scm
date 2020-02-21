@@ -23,8 +23,12 @@
           lst
           (member v (cdr lst)))))
 
+;; we need a numeric value to represent not-found; microscheme only has unsigned
+;; ints but this will still get us a reasonable not-found value
+(define not-found (- 0 1))
+
 (define (find-aux v x n max)
-  (if (= x (or (vector-ref v n) (- 0 1)))
+  (if (= x (or (vector-ref v n) not-found))
       n
       (if (= n max)
           #f
@@ -93,7 +97,7 @@
 
 (define (remove-last-down-aux key n)
   (if (< n 9)
-      (if (= key (or (vector-ref last-keys-down n) -1))
+      (if (equal? key (vector-ref last-keys-down n))
           (vector-set! last-keys-down n #f)
           (remove-last-down-aux key (+ n 1)))
       #f))
