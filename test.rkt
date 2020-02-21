@@ -59,8 +59,10 @@
     ((3) . (() ,key-r))
     ;; another single key
     ((2) . (() ,key-e))
+    ;; the first key in the whole layout
+    ((0) . (() ,key-q))
     ;; multiple normal keys
-    ((2 3) . (() ,key-r ,key-e))
+    ((2 3) . (() ,key-e ,key-r))
     ;; modifier keys (ctrl)
     ((27) . ((ctrl)))
     ;; two modifiers (shift+ctrl) get ORed together
@@ -77,6 +79,18 @@
     ((40 35 2) . ((super) ,key-up))
     ;; releasing fn should leave the previously-pressed key on the fn layer!!!
     ((2) . (() ,key-up))
+
+    ;; fn key alone
+    ((40) . (()))
+    ;; fn key and *
+    ((40 28) . ((shift) ,key-8))
+    ;; fn is released
+    ((28) . ((shift) ,key-8))
+    ;; * is released
+    (() . (()))
+    ;; normal key doesn't leave shift down
+    ((0) . (() ,key-q))
+
     ;; changing to L2 (fn+esc)
     ((40) . (()))
     ((40 33) . (()))

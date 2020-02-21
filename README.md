@@ -49,6 +49,9 @@ into Racket and simulates the GPIO functions with a test harness:
 If you hold down two keys which contain a modifier (for instance,
 shift and !) and release one of them, it will count as if both are released.
 
+The reset function has no effect; hard-reset must be used to reflash
+the firmware.
+
 ## License
 
 Copyright © 2014-2019 Phil Hagelberg and contributors

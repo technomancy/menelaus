@@ -1,5 +1,7 @@
 ;;; this is the multidvorak layout
 
+;; it will work for the 44-key Atreus 2 or the 42-key Atreus 1.
+
 ;; we have to declare this up front and set it later because of circularity
 (define layers #f)
 (define current-layer #f)
@@ -10,15 +12,22 @@
 (define (set-layer n)
   (lambda (_) (set! current-layer (vector-ref layers n))))
 
-(define (reset _) (call-c-func "reset"))
+(define (reset _) (call-c-func "reset")) ; broken
+
+;; on the Atreus 1, we need to expose backtick on the fn layer, but on
+;; the Atreus 2 it has its own key, so we put percent there instead
+(define backtick-or-percent
+  key-backtick
+  ;; (sft key-5)
+  )
 
 ;;;; layers
 
 (define base-layer
- (vector key-q key-w key-e key-r key-t key-backslash
+ (vector key-q key-w key-e key-r key-t key-backtick
          key-y key-u key-i key-o key-p
 
-         key-a key-s key-d key-f key-g key-backtick
+         key-a key-s key-d key-f key-g key-backslash
          key-h key-j key-k key-l key-semicolon
 
          key-z key-x key-c key-v key-b mod-ctrl
@@ -28,14 +37,14 @@
          key-space fn key-quote key-left-bracket key-enter))
 
 (define fn-layer
- (vector (sft key-1) (sft key-2) key-up (sft key-dash) (sft key-equal) 0
-         key-page-up key-7 key-8 key-9 (sft key-8)
+ (vector (sft key-1) (sft key-2) key-up (sft key-4) backtick-or-percent (sft key-6)
+         key-page-up key-7 key-8 key-9 key-backspace
 
-         (sft key-3) key-left key-down key-right (sft key-4) 0
-         key-page-down key-4 key-5 key-6 (sft key-right-bracket)
+         (sft key-9) key-left key-down key-right (sft key-0) (sft key-7)
+         key-page-down key-4 key-5 key-6 key-backslash
 
-         key-dash key-equal (sft key-9) (sft key-0) (sft key-7) mod-ctrl
-         key-backtick key-1 key-2 key-3 key-backslash
+         key-dash key-equal (sft key-3) (sft key-dash) (sft key-equal) mod-ctrl
+         (sft key-8) key-1 key-2 key-3 (sft key-right-bracket)
 
          (set-layer 2) key-insert mod-super mod-shift key-backspace mod-alt
          key-space fn key-e key-0 key-right-bracket))
@@ -67,8 +76,8 @@
          key-space fn key-quote key-left-bracket key-enter))
 
 (define hard-dvorak-fn-layer
- (vector (sft key-1) (sft key-2) key-up (sft key-left-bracket) (sft key-right-bracket) 0
-         key-page-up key-7 key-8 key-9 (sft key-8)
+ (vector (sft key-1) (sft key-2) key-up (sft key-4) (sft key-5) (sft key-6)
+         key-page-up key-7 key-8 key-9 (sft key-backspace)
 
          (sft key-3) key-left key-down key-right (sft key-4) 0
          key-page-down key-4 key-5 key-6 (sft key-equal)

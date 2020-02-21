@@ -1,5 +1,4 @@
 (include "keycodes.scm")
-(include "layout.scm")
 
 (define rows (list 0 1 2 3))
 (define row-pins (vector 3 2 1 0))
@@ -7,6 +6,13 @@
 (define column-pins (vector 6 5 9 8 7 4 10 19 18 12 11))
 
 (define max-keys 10) ; single USB frame can only send 6 keycodes plus modifiers
+
+;; pcbdown flip, comment out for normal
+;; (begin (set! mod-alt (modify 1))
+;;        (set! mod-ctrl (modify 3))
+;;        (set! column-pins (vector 11 12 18 19 10 4 7 8 9 5 6)))
+
+(include "layout.scm")
 
 ;;;;;;;;;;;;;;;;;;; utils
 
@@ -59,7 +65,7 @@
 
 ;;;;;;;;;;;;;;;;;;; debouncing
 
-(define debounce-passes 4)
+(define debounce-passes 3)
 
 (define (debounce-matrix-aux last-scan passes-left)
   (if (< 0 passes-left)
@@ -74,10 +80,10 @@
 
 ;;;;;;;;;;;;;;;;;;; press and release tracking
 
-(define last-keys-down (vector 0 0 0 0 0 0 0 0 0 0))
+(define last-keys-down (vector #f #f #f #f #f #f #f #f #f #f))
 
 (define (add-last-down-aux key n)
-  (if (= 0 (vector-ref last-keys-down n))
+  (if (not (vector-ref last-keys-down n))
       (vector-set! last-keys-down n key)
       (if (< n 9)
           (add-last-down-aux key (+ n 1))
@@ -87,8 +93,8 @@
 
 (define (remove-last-down-aux key n)
   (if (< n 9)
-      (if (= key (vector-ref last-keys-down n))
-          (vector-set! last-keys-down n 0)
+      (if (= key (or (vector-ref last-keys-down n) -1))
+          (vector-set! last-keys-down n #f)
           (remove-last-down-aux key (+ n 1)))
       #f))
 
@@ -98,7 +104,7 @@
 (define (remove-aux v lst checked all?)
   (if (null? lst)
       (reverse checked)
-      (if (= v (car lst))
+      (if (equal? v (car lst))
           (if all?
               (remove-aux v (cdr lst) checked all?)
               (reverse (append (cdr lst) checked)))
@@ -117,7 +123,7 @@
 
 (define (press/release-for keys-scanned)
   (let ((p/r (press/release-aux (list)
-                                (remove-all 0 (vector->list last-keys-down))
+                                (remove-all #f (vector->list last-keys-down))
                                 keys-scanned)))
     ;; save off press/release into last-keys-down for next cycle
     (for-each add-last-down (car p/r))
@@ -139,8 +145,6 @@
 
 (define (press-modifier keycode key)
   (vector-set! modifiers (- keycode 1) 1)
-  ;; TODO: there is one bug here: if multiple keys have caused a modifier to be
-  ;; active, then releasing only one of the keys will release the modifier.
   (vector-set! keys-for-modifiers (- keycode 1) key))
 
 (define (release-modifier keycode key n)
@@ -169,17 +173,21 @@
             (press-normal-key keycode key)))))
 
 (define (release-key key)
+  ;; lookup here looks it up in the current layer, even if it was pressed in
+  ;; the momentary layer. these need to be consistent across layers or tracked
+  ;; in a similar manner as keys-for-frame.
   (let ((keycode (lookup key)))
     (if (procedure? keycode)
         (keycode #f)
-        (let ((slot (find keys-for-frame key)))
+        (let ((slot (find keys-for-frame key))
+              (modifier-slot (find keys-for-modifiers key)))
           (if slot
               (begin
                 (vector-set! keycodes-down slot 0)
                 (vector-set! keys-for-frame slot 0))
               #f)
-          (if (modifier? keycode)
-              (release-modifier (unmodify keycode) key 0)
+          (if modifier-slot
+              (release-modifier modifier-slot key 0)
               #f)))))
 
 ;;;;;;;;;;;;;;;;;;; showtime
@@ -203,7 +211,7 @@
 
 (define (usb-send m k0 k1 k2 k3 k4 k5)
   ;; call-c-func is a special form and cannot be applied
-  (let ((mods (+ (vector-ref m 0) (* (vector-ref m 1) 2)))) ; plus isn't variadic
+  (let ((mods (+ (vector-ref m 0) (* (vector-ref m 1) 2)))) ; + isn't variadic
     (let ((mods (+ mods (+ (* (vector-ref m 2) 4) (* (vector-ref m 3) 8)))))
       (call-c-func "usb_send" mods k0 k1 k2 k3 k4 k5))))
 

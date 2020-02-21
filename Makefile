@@ -16,7 +16,7 @@ test: ; racket test.rkt
 
 clean: ; -rm -f $(TARGET){,.hex} *.o *.elf *.s
 
-count: ; cloc menelaus.scm keycodes.scm
+count: ; cloc menelaus.scm keycodes.scm layout.scm
 
 $(TARGET).hex: $(TARGET).elf
 	avr-size $(TARGET).elf
