@@ -16,23 +16,12 @@
 
 ;;;;;;;;;;;;;;;;;;; utils
 
-(define (member v lst)
-  (if (null? lst)
-      #f
-      (if (equal? v (car lst))
-          lst
-          (member v (cdr lst)))))
-
-;; we need a numeric value to represent not-found; microscheme only has unsigned
-;; ints but this will still get us a reasonable not-found value
-(define not-found (- 0 1))
-
 (define (find-aux v x n max)
-  (if (= x (or (vector-ref v n) not-found))
-      n
-      (if (= n max)
-          #f
-          (find-aux v x (+ n 1) max))))
+  (let ((y (vector-ref v n)))
+    (if (and y (= x y))
+        n
+        (and (< n max)
+             (find-aux v x (+ n 1) max)))))
 
 (define (find v x)
   (find-aux v x 0 (- (vector-length v) 1)))
@@ -96,16 +85,15 @@
           #f)))
 
 (define (remove-last-down-aux key n)
-  (if (< n 9)
-      (if (equal? key (vector-ref last-keys-down n))
-          (vector-set! last-keys-down n #f)
-          (remove-last-down-aux key (+ n 1)))
-      #f))
+  (if (equal? key (vector-ref last-keys-down n))
+      (vector-set! last-keys-down n #f)
+      (and (< n 9) (remove-last-down-aux key (+ n 1)))))
 
 (define (add-last-down key) (add-last-down-aux key 0))
 (define (remove-last-down key) (remove-last-down-aux key 0))
 
 (define (remove-aux v lst checked all?)
+  ;; also missing the cond form
   (if (null? lst)
       (reverse checked)
       (if (equal? v (car lst))
