@@ -4,14 +4,16 @@ A firmware for the
 [Atreus](http://atreus.technomancy.us) keyboard, written in
 [Microscheme](https://ryansuchocki.github.io/microscheme/).
 
+See [this article about how it works](https://atreus.technomancy.us/firmware).
+
 ## Features
 
-* 6KRO (6 simultaneous keys, not including modifiers)
+* 6KRO (6 simultaneous keys, plus modifiers)
 * Software debouncing
 * Multiple layers, momentary and sticky (limited only by memory)
 * Combo keys (a single keystroke can send a modifier and a non-modifier)
 * Bind arbitrary Scheme functions to a key
-* ~250 lines of code
+* ~300 lines of code
 
 ## Usage
 
@@ -46,8 +48,8 @@ into Racket and simulates the GPIO functions with a test harness:
 
 ## Known bugs
 
-The reset function has no effect; hard-reset must be used to reflash
-the firmware.
+The reset function has no effect; hard-reset (shorting the RST and GND
+pins with a wire) must be used to flash the firmware.
 
 ## License
 

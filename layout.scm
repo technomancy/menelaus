@@ -12,14 +12,14 @@
 (define (set-layer n)
   (lambda (_) (set! current-layer (vector-ref layers n))))
 
-(define (reset _) (call-c-func "reset")) ; broken
+;; this will reset the board but fails to enter the bootloader for some reason
+(define (reset _) (call-c-func "reset"))
 
 ;; on the Atreus 1, we need to expose backtick on the fn layer, but on
 ;; the Atreus 2 it has its own key, so we put percent there instead
 (define backtick-or-percent
-  key-backtick
   ;; (sft key-5)
-  )
+  key-backtick)
 
 ;;;; layers
 

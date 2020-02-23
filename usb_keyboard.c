@@ -604,7 +604,9 @@ ISR(USB_COM_vect)
   UECONX = (1<<STALLRQ) | (1<<EPEN);  // stall
 }
 
-// this fails to enter the bootloader
+// this fails to enter the bootloader.
+// it is unknown why the same code fails here but works fine in
+// https://github.com/technomancy/atreus-firmware/blob/master/atreus.c#L230
 void reset(void) {
   UDCON = 1; USBCON = (1<<FRZCLK); UCSR1B = 0;
   _delay_ms(5);
