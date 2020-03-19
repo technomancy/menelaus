@@ -176,7 +176,7 @@
           (if slot
               (begin
                 (vector-set! keycodes-down slot 0)
-                (vector-set! keys-for-frame slot 0))
+                (vector-set! keys-for-frame slot #f))
               #f)
           (if modifier-slot
               (release-modifier modifier-slot key 0)
