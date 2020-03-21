@@ -21,7 +21,7 @@
   ;; (sft key-5)
   key-backtick)
 
-;;;; layers
+;;;; Layers
 
 ;; NB: the middle keys (ctrl and alt on the 42-key, also ~ and \ on the 44-key
 ;; variant) are physically in two separate columns, but electrically they are
@@ -53,6 +53,7 @@
           key-n key-m key-comma key-period key-slash
 
           key-esc key-tab mod-super mod-shift key-backspace mod-alt
+          ;; fn takes us to fn-layer below while it is held down
           key-space fn key-quote key-left-bracket key-enter))
 
 (define fn-layer
@@ -65,6 +66,7 @@
           key-dash key-equal (sft key-3) (sft key-dash) (sft key-equal) mod-ctrl
           (sft key-8) key-1 key-2 key-3 (sft key-right-bracket)
 
+          ;; set-layer 2 takes us to l2-layer below; doesn't need to be held
           (set-layer 2) key-insert mod-super mod-shift key-backspace mod-alt
           key-space fn key-e key-0 key-right-bracket))
 
@@ -75,10 +77,13 @@
           key-delete key-left key-down key-right key-page-down 0
           key-down key-f4 key-f5 key-f6 key-f11
 
-          (set-layer 0) key-vol-up 0 0 reset mod-ctrl
+          ;; the B key enters the bootloader
+          0 key-vol-up 0 0 reset mod-ctrl
+          ;; the N key switches to hardware dvorak mode
           (set-layer 4) key-f1 key-f2 key-f3 key-f12
 
           0 key-vol-down mod-super mod-shift key-backspace mod-alt
+          ;; tapping the fn key brings us back to the base layer
           key-space (set-layer 0) key-printscreen key-scroll-lock key-pause))
 
 (define hard-dvorak-layer
@@ -109,3 +114,4 @@
 
 (set! layers (vector base-layer fn-layer l2-layer
                      hard-dvorak-layer hard-dvorak-fn-layer))
+(set! current-layer (vector-ref layers 0))

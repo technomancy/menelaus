@@ -36,7 +36,12 @@ can be invoked by a key combo and sometimes a hard reset is
 necessary. On the A-star Micro used in the Atreus kits, this is done
 by shorting GND and RST twice in under a second, which causes the
 onboard LED to pulse. The Keyboardio Atreus has a reset button you can
-press with a pin to the bottom of the board.
+press with a pin to the bottom of the board. On linux-based systems
+you can monitor for the bootloader activation using `sudo dmesg --follow`.
+
+Some linux-based systems will need a udev rule to grant permissions to
+the USB device for uploading firmware. If you get permission denied on
+`/dev/ttyACM0` or whatever it is, try running `sudo make udev`.
 
 ## Known bugs
 
@@ -72,7 +77,8 @@ into Racket and simulates the GPIO functions with a test harness:
 
 Copyright © 2014-2020 Phil Hagelberg and contributors
 
-Released under the [GNU GPL version 3](https://www.gnu.org/licenses/gpl.html).
+Released under the [GNU GPL version 3](https://www.gnu.org/licenses/gpl.html)
+or any later version.
 
 Uses [PJRC USB Keyboard library](http://www.pjrc.com/teensy/usb_keyboard.html)
 which is Copyright © 2009 PJRC.COM, LLC and released under the MIT/X11 license.

@@ -97,7 +97,7 @@
 (define (combo modifier keycode) (list (car modifier) keycode))
 (define (uncombo keycode) (and (= 2 (length keycode)) (car (cdr keycode))))
 
-;; we're treating these a little differently; they are not literal USB values
+;; We're treating these a little differently; they are not literal USB values.
 (define mod-ctrl (modify 1))
 (define mod-shift (modify 2))
 (define mod-alt (modify 3))

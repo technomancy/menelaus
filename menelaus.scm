@@ -1,4 +1,18 @@
-;;; menelaus.scm - a USB keyboard firmware for the Atreus.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; menelaus.scm
+
+;; a USB keyboard firmware for the Atreus.
+
+;; Copyright © 2014-2020 Phil Hagelberg
+;; Released under the GNU General Public License version 3 or any later
+;; version.
+
+;; The point of a keyboard firmware is to translate physical key presses on
+;; switches into USB keycodes that get sent to the host. This process takes
+;; several phases:
+
+;; Matrix scan -> Debounce -> Track press/release -> Layout lookup -> Send USB
+
+;; Each phase is described in more detail below.
 
 ;; Note that there are a few unusual style choices made here because
 ;; it is written in a shared subset of Microscheme and Racket so that it
@@ -7,9 +21,11 @@
 ;; For one example, we use `and' where `when' would be more idiomatic. We
 ;; are also missing the `cond' form.
 
-;; In general when you see an -aux function, it is an internal function which
-;; recursively steps thru a vector/list with the initial arguments calculated
-;; by its non-aux equivalent.
+;; When you see an -aux function, it is an internal function which recursively
+;; steps thru a vector/list with the initial arguments calculated by its
+;; non-aux equivalent. The -aux function is never called directly.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (include "keycodes.scm")
 (include "layout.scm")
@@ -33,7 +49,7 @@
 ;; isn't yet part of Microscheme:
 ;; https://github.com/ryansuchocki/microscheme/issues/32
 
-;;;;;;;;;;;;;;;;;;; Utility
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Utility functions
 
 (define (find-aux v x n max)
   (let ((y (vector-ref v n)))
@@ -61,13 +77,18 @@
 ;; Return a copy of lst with all elements equal to v removed.
 (define (remove-all v lst) (remove-aux v lst (list) #t))
 
-;;;;;;;;;;;;;;;;;;; The Matrix
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Matrix Scan
 
-;; A scan is defined as a list containing the key positions which are currently
+;; This phase is responsible for determining the current state of the key
+;; matrix; that is, which keys are reading as down for a given instant.
+
+;; It returns a scan list containing the key positions which are currently
 ;; pressed for a given pass thru the key matrix. We specifically do not attempt
 ;; to look up what the keys are mapped to yet; we have to do that later on after
 ;; identifying presses and releases, otherwise we run into layer-switching bugs.
 ;; Each element in the list is an integer representation of the key in question.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Which key in a layout vector is represented by the given row and column?
 (define (offset-for row col)
@@ -106,13 +127,18 @@
         (scan-matrix (scan-column scan (car rows-left) columns)
                      (cdr rows-left)))))
 
-;;;;;;;;;;;;;;;;;;; Debouncing
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Debounce
+
+;; This phase is responsible for filtering out spurious keypresses detected
+;; by the matrix scan due to physical properties of switching logic.
 
 ;; Electrical contacts do not switch cleanly from high to low voltage; there is
 ;; a short period of "bounce" while the signal settles into its new position.
 ;; In order to counteract this effect, we scan the whole matrix several times,
 ;; only considering the data we get trustworthy if we get the same value three
 ;; times in a row.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define debounce-passes 3)
 
@@ -127,7 +153,11 @@
 (define (debounce-matrix)
   (debounce-matrix-aux (list) debounce-passes))
 
-;;;;;;;;;;;;;;;;;;; Press and release tracking
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Track press/release
+
+;; This phase is responsible for comparing the current state of the keys to
+;; the previous pass and interpreting which keys are newly pressed and which are
+;; newly released.
 
 ;; If we didn't have layers, we'd be done now. But since we have layers, we
 ;; can't assume a 1:1 mapping between keys pressed and keycodes we should send.
@@ -144,6 +174,8 @@
 
 ;; Because of this, it's necessary to track press and release on the level of
 ;; physical keys and only map it to keycodes when a new press is detected.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Which physical keys were pressed during the last scan?
 (define last-keys-down (vector #f #f #f #f #f #f #f #f #f #f))
@@ -182,11 +214,45 @@
     (for-each remove-last-down (cdr p/r))
     p/r))
 
-;;;;;;;;;;;;;;;;;;; Generating Keycodes
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Layout lookup
 
-;; Given keys that have been pressed, turn those into keycodes for our USB
-;; frame. Given keys that are released, update the press/release tracking
-;; data to reflect them.
+;; This phase is responsible for taking keys that have been pressed and turning
+;; those into keycodes for our USB frame, and also for taking the keys that
+;; have been released and removing from the USB frame and press/release
+;; tracking data.
+
+;; In order to release keys consistently across layer changes, it's necessary
+;; to store which physical keys are responsible for which keycodes being sent.
+;; A key being released means that we stop sending the keycode that was bound
+;; to that key when it was pressed, not the keycode bound to that key in the
+;; current layer!
+
+;; Data is stored in two vectors: modifiers and keycodes-down. Modifiers is of
+;; length 4 because there are only 4 modifiers; (we ignore that left-shift
+;; and right-shift can be distinguished). The keycodes-down vector is of length
+;; 6 because that is defined in the USB standard as the number of non-modifier
+;; keycodes that a single USB frame can represent.
+
+;; If you have more than ten fingers, I'm sorry; try a different firmware.
+
+;; The layout is defined in layout.scm as a vector of layer vectors. Each layer
+;; vector is simply a vector of elements, arranged one row after another
+;; corresponding to the physical keys.
+
+;; Most of these elements are integers; these correspond to normal USB keycodes
+;; as defined in keycodes.scm.
+
+;; Some elements are lists; these indicate modifier keys. A list of length 1 is
+;; simply a single modifier key, while a list of length 2 is a modifier plus a
+;; non-modifier simultaneously. This is how we can define a ! key despite there
+;; being no USB keycode for the ! character; it is defined as a combo of shift
+;; and 1.
+
+;; Finally some elements are Scheme procedures (aka functions). These procedures
+;; get called with #t when they are first pressed and with #f when released.
+;; These are mostly used for layer switching but could be used for anything.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Vectors to store keycodes for the USB frame we are preparing to send.
 (define modifiers (vector 0 0 0 0))
@@ -254,18 +320,14 @@
               (release-modifier modifier-slot key 0)
               #f)))))
 
-;;;;;;;;;;;;;;;;;;; SHOWTIME
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Send USB
 
-;; Prepare the GPIO pins and initialize the USB connection.
-(define (init)
-  (set! current-layer (vector-ref layers 0))
-  (for-each-vector output row-pins)
-  (for-each-vector high row-pins)
-  (for-each-vector input column-pins)
-  (for-each-vector high column-pins) ; activate pullup resistors
+;; This phase is responsible for the initialization, the main loop, and
+;; actually sending the USB frame to the host once it has been calculated.
 
-  (call-c-func "usb_init")
-  (pause 200))
+;; Not much left to do here; just tying up loose ends bringing it all together.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Take press/release data and set USB keycodes and modifiers.
 (define (set-usb-frame press/release)
@@ -283,10 +345,24 @@
 
 ;; Scan the matrix, determine the appropriate keycodes, and send them.
 (define (loop)
+  ;; Microscheme doesn't have garbage collection; it has you preallocate
+  ;; everything you can, and then run your code that might allocate more memory
+  ;; inside this `free!' macro. When you enter this macro, the heap pointer gets
+  ;; saved, and when you leave, it gets set back to the point it was previously,
+  ;; effectively garbage-collecting any allocations which happened inside the
+  ;; macro in one fell swoop. Primitive, but effective.
   (free! (let ((keys-scanned (debounce-matrix)))
            (set-usb-frame (press/release-for keys-scanned))
            (apply usb-send (cons modifiers (vector->list keycodes-down)))))
   (loop))
 
-(init)
+;; Prepare the GPIO pins.
+(for-each-vector output row-pins)
+(for-each-vector high row-pins)
+(for-each-vector input column-pins)
+(for-each-vector high column-pins) ; activate pullup resistors
+
+;; Initialize the USB connection and go!
+(call-c-func "usb_init")
+(pause 200)
 (loop)
