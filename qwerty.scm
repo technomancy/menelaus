@@ -2,6 +2,27 @@
 
 (include "keycodes.scm")
 
+;; What are the rows and columns we care about?
+(define rows (list 0 1 2 3))
+(define columns (list 0 1 2 3 4 5 6 7 8 9 10))
+
+;; Which GPIO pins are responsible for each row or column?
+;; These are the pins used by the kit-based Atreus; the Keyboardio Atreus uses
+;; a different set of pins.
+(define row-pins (vector 3 2 1 0))
+(define column-pins (vector 6 5 9 8 7 4 10 19 18 12 11))
+
+;; If you have a kit where the PCB is installed upside-down, uncomment this:
+;; (set! column-pins (vector 11 12 18 19 10 4 7 8 9 5 6))
+;; ;; Upside-down PCB makes the columns backwards but also trades ctrl and alt;
+;; ;; this hack only works for layouts where ctrl and alt are in standard place.
+;; (set! mod-alt (modify 1))
+;; (set! mod-ctrl (modify 3))
+
+;; The above should be handled by a compile-time environment variable but that
+;; isn't yet part of Microscheme:
+;; https://github.com/ryansuchocki/microscheme/issues/32
+
 ;; we have to declare this up front and set it later because of circularity
 (define layers #f)
 (define current-layer #f)
@@ -57,26 +78,5 @@
 
 (set! layers (vector base-layer fn-layer l2-layer))
 (set! current-layer (vector-ref layers 0))
-
-;; What are the rows and columns we care about?
-(define rows (list 0 1 2 3))
-(define columns (list 0 1 2 3 4 5 6 7 8 9 10))
-
-;; Which GPIO pins are responsible for each row or column?
-;; These are the pins used by the kit-based Atreus; the Keyboardio Atreus uses
-;; a different set of pins.
-(define row-pins (vector 3 2 1 0))
-(define column-pins (vector 6 5 9 8 7 4 10 19 18 12 11))
-
-;; If you have a kit where the PCB is installed upside-down, uncomment this:
-;; (set! column-pins (vector 11 12 18 19 10 4 7 8 9 5 6))
-;; ;; Upside-down PCB makes the columns backwards but also trades ctrl and alt;
-;; ;; this hack only works for layouts where ctrl and alt are in standard place.
-;; (set! mod-alt (modify 1))
-;; (set! mod-ctrl (modify 3))
-
-;; The above should be handled by a compile-time environment variable but that
-;; isn't yet part of Microscheme:
-;; https://github.com/ryansuchocki/microscheme/issues/32
 
 (include "menelaus.scm")

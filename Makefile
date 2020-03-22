@@ -8,6 +8,9 @@ USB=/dev/ttyACM0
 build: $(LAYOUT).hex
 
 upload: $(LAYOUT).hex
+	echo "Put your device in bootloader mode now..."
+	echo "Classic Atreus: connect GND pin to RST pin twice in under a secod."
+	echo "Keyboardio Atreus: press the button on the underside of the board."
 	while [ ! -r $(USB) ]; do sleep 1; done; \
 	avrdude -p $(MCU) -c avr109 -U flash:w:$(LAYOUT).hex -P $(USB)
 
