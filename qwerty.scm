@@ -35,6 +35,12 @@
 
 (define (reset _) (call-c-func "reset"))
 
+;; On the Atreus 1, we need to expose backtick on the fn layer, but on
+;; the Atreus 2 it has its own key, so we put percent there instead.
+(define backtick-or-percent
+  ;; (sft key-5)
+  key-backtick)
+
 ;;;; layers
 
 (define base-layer
@@ -51,30 +57,34 @@
          key-space fn key-dash key-quote key-enter))
 
 (define fn-layer
- (vector (sft key-1) (sft key-2) key-up (sft key-left-bracket) (sft key-right-bracket) 0
-         key-page-up key-7 key-8 key-9 (sft key-8)
+  (vector (sft key-1) (sft key-2) key-up (sft key-4) backtick-or-percent
+          (sft key-6) key-page-up key-7 key-8 key-9 key-backspace
 
-         (sft key-3) key-left key-down key-right (sft key-4) 0
-         key-page-down key-4 key-5 key-6 (sft key-equal)
+          (sft key-9) key-left key-down key-right (sft key-0) (sft key-7)
+          key-page-down key-4 key-5 key-6 key-backslash
 
-         key-left-bracket key-right-bracket (sft key-0) (sft key-7) mod-ctrl
-         key-backtick key-1 key-2 key-3 key-backslash
+          key-left-bracket key-right-bracket (sft key-3) (sft key-left-bracket)
+                                                (sft key-right-bracket) mod-ctrl
+          (sft key-8) key-1 key-2 key-3 (sft key-equal)
 
-         (set-layer 2) key-insert mod-super mod-shift key-backspace mod-alt
-         key-space fn key-e key-0 key-right-bracket))
+          ;; set-layer 2 takes us to l2-layer below; doesn't need to be held
+          (set-layer 2) key-insert mod-super mod-shift key-backspace mod-alt
+          key-space fn key-period key-0 key-equal))
 
 (define l2-layer
- (vector key-insert key-home key-up key-end key-page-up 0
-         key-up key-f7 key-f8 key-f9 key-f10
+  (vector key-insert key-home key-up key-end key-page-up 0
+          key-up key-f7 key-f8 key-f9 key-f10
 
-         key-delete key-left key-down key-right key-page-down 0
-         key-down key-f4 key-f5 key-f6 key-f11
+          key-delete key-left key-down key-right key-page-down 0
+          key-down key-f4 key-f5 key-f6 key-f11
 
-         (set-layer 0) key-vol-up 0 0 reset mod-ctrl
-         0 key-f1 key-f2 key-f3 key-f12
+          ;; the B key enters the bootloader
+          0 key-vol-up 0 0 reset mod-ctrl
+          0 key-f1 key-f2 key-f3 key-f12
 
-         0 key-vol-down mod-super mod-shift key-backspace mod-alt
-         key-space (set-layer 0) key-printscreen key-scroll-lock key-pause))
+          0 key-vol-down mod-super mod-shift key-backspace mod-alt
+          ;; tapping the fn key brings us back to the base layer
+          key-space (set-layer 0) key-printscreen key-scroll-lock key-pause))
 
 (set! layers (vector base-layer fn-layer l2-layer))
 (set! current-layer (vector-ref layers 0))
