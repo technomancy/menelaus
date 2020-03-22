@@ -4,6 +4,8 @@ A firmware for the
 [Atreus](http://atreus.technomancy.us) keyboard, written in
 [Microscheme](https://ryansuchocki.github.io/microscheme/).
 
+![Atreus keyboard](atreus.jpg)
+
 See [this article about how it works](https://atreus.technomancy.us/firmware).
 
 ## Features
@@ -51,15 +53,21 @@ used to flash a new firmware once this is uploaded.
 
 ## Layout
 
+![layout](layout.png)
+
 By default you get the qwerty layout. You can copy `qwerty.scm` to
 `mylayout.scm` and make changes, (you can see a list of available
 keycodes in `keycodes.scm`) then upload with:
 
-    $ make upload USB=/dev/ttyACM0 LAYOUT=multidvorak
+    $ make upload USB=/dev/ttyACM0 LAYOUT=mylayout
 
 There is also a `multidvorak` layout which is designed to send
 the right keycodes with the assumption that the OS is set to use
 Dvorak, but it also includes layers for "hard Dvorak".
+
+The default layout is based on the Keyboardio Atreus, except that for
+older 42-key builds, the percent key is replaced with backtick, and
+backslash is fn+semicolon.
 
 ## Development
 
