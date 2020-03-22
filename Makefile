@@ -1,32 +1,31 @@
 MCU=atmega32u4
-
 F_CPU=16000000
 
-TARGET=menelaus
+LAYOUT?=qwerty
 
 USB=/dev/ttyACM0
 
-build: $(TARGET).hex
+build: $(LAYOUT).hex
 
-upload: $(TARGET).hex
+upload: $(LAYOUT).hex
 	while [ ! -r $(USB) ]; do sleep 1; done; \
-	avrdude -p $(MCU) -c avr109 -U flash:w:$(TARGET).hex -P $(USB)
+	avrdude -p $(MCU) -c avr109 -U flash:w:$(LAYOUT).hex -P $(USB)
 
 test: ; racket test.rkt
 
-clean: ; -rm -f $(TARGET){,.hex} *.o *.elf *.s
+clean: ; -rm -f $(LAYOUT){,.hex} *.o *.elf *.s
 
-count: ; cloc menelaus.scm keycodes.scm layout.scm
+count: ; cloc menelaus.scm keycodes.scm $(LAYOUT).scm
 
-$(TARGET).hex: $(TARGET).elf
-	avr-size $(TARGET).elf
-	avr-objcopy --output-target=ihex $(TARGET).elf $(TARGET).hex
+$(LAYOUT).hex: $(LAYOUT).elf
+	avr-size $(LAYOUT).elf
+	avr-objcopy --output-target=ihex $(LAYOUT).elf $(LAYOUT).hex
 
-$(TARGET).s: $(TARGET).scm layout.scm keycodes.scm
-	microscheme -m LEO $(TARGET).scm
+$(LAYOUT).s: $(LAYOUT).scm menelaus.scm keycodes.scm
+	microscheme -m LEO $(LAYOUT).scm
 
 %.elf: %.s usb_keyboard.s
-	avr-gcc -mmcu=$(MCU) -o $(TARGET).elf $(TARGET).s usb_keyboard.s
+	avr-gcc -mmcu=$(MCU) -o $(LAYOUT).elf $(LAYOUT).s usb_keyboard.s
 
 usb_keyboard.s: usb_keyboard.h usb_keyboard.c
 	avr-gcc -std=gnu99 -S -D F_CPU=$(F_CPU)UL -mmcu=$(MCU) -c \

@@ -14,7 +14,7 @@
 (define (low pin) (vector-set! pins pin #f))
 
 ;; microscheme has this as a separate form
-(define for-each-vector vector-map)
+(define (for-each-vector v f) (vector-map v f) (void))
 
 (define last-usb-frame #f) ; save this off so we can test it
 
@@ -147,4 +147,4 @@
                               (fail (cdr test-case) actual)))
                         (set! test-data (cdr test-data))))]))
 
-(include "menelaus.scm")
+(include "multidvorak.scm")

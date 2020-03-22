@@ -14,12 +14,13 @@ See [this article about how it works](https://atreus.technomancy.us/firmware).
 * Combo keys (a single keystroke can send a modifier and a non-modifier)
 * Bind arbitrary Microscheme functions to a key
 * ~300 lines of code
+* Qwerty and Dvorak layouts; easy to add more
 
 ## Usage
 
 Install [microscheme](https://github.com/ryansuchocki/microscheme/)
 from source; place `microscheme` executable on your `$PATH`. Version
-823c5d9 from February 2020 is known to work.
+3bc5611 from March 2020 is known to work.
 
 Requires [avrdude](https://www.nongnu.org/avrdude/) for uploading
 to the controller on the keyboard; install with your package manager
@@ -50,18 +51,15 @@ used to flash a new firmware once this is uploaded.
 
 ## Layout
 
-By default you get the "multidvorak" layout which is designed to send
+By default you get the qwerty layout. You can copy `qwerty.scm` to
+`mylayout.scm` and make changes, (you can see a list of available
+keycodes in `keycodes.scm`) then upload with:
+
+    $ make upload USB=/dev/ttyACM0 LAYOUT=multidvorak
+
+There is also a `multidvorak` layout which is designed to send
 the right keycodes with the assumption that the OS is set to use
-Dvorak, but it also includes layers for "hard Dvorak". But you can
-also build a qwerty layout:
-
-    $ cp qwerty.scm layout.scm
-    $ make upload USB=/dev/ttyACM0
-
-Or edit `layout.scm` to your liking; you can see a list of available
-keycodes in `keycodes.scm`. The default layout works for 42-key Atreus
-kits and the 44-key Keyboardio Atreus, but you will have to uncomment
-a few things for the full 44-key support.
+Dvorak, but it also includes layers for "hard Dvorak".
 
 ## Development
 
