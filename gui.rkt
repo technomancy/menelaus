@@ -72,7 +72,11 @@
         (send canvas set-font (if special? small-font font))
         (send canvas draw-text key
               (+ (first xy) (if special? 2 4))
-              (+ (second xy) (if special? 2 0)))))))
+              (+ (second xy) (if special? 2 0))))))
+  (send canvas set-font small-font)
+  (send canvas draw-text "Select a key with the arrows." 10 100)
+  (send canvas draw-text "Set its keycode with space." 10 108)
+  (send canvas draw-text "Press enter to write the layout to disk." 10 116))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Output
 
@@ -153,7 +157,9 @@
     [(escape) (set-state-mode! st 'quit)]
     [(#\space) (set-state-mode! st 'set)]
     [(#\tab) (printf "~s~n" st) st]
-    [(#\return) (write-layout "out.scm" (state-layers st))]
+    [(#\return) (let ([filename (put-file "Save to:")])
+                  (when filename
+                    (write-layout filename (state-layers st))))]
     [(release) #f]
     [else (printf "~s~n" keycode) st]))
 
