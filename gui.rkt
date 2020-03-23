@@ -95,7 +95,11 @@
     (include "menelaus.scm")))
 
 (define (racket-key->ms-key key)
-  'key-a)
+  (let ((sym (string->symbol (format "key-~a" key))))
+    (with-handlers ([exn? (λ (_) 0)])
+      ;; Try to see if the key is defined in keycodes.scm
+      ;; TODO: find a way to do this without eval
+      (and (eval sym) sym))))
 
 (define (layers-form layers)
   `((set! layers (vector ,@(for/list ([layer layers])
@@ -111,25 +115,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Updating
 
-(define (move st dx dy)
-  (set-state-row! st (modulo (+ dy (state-row st)) rows))
-  (set-state-col! st (modulo (+ dx (state-col st)) cols)))
-
-(define (handle-select st keycode)
-  (case keycode
-    [(right) (move st 1 0)]
-    [(left) (move st -1 0)]
-    [(up) (move st 0 -1)]
-    [(down) (move st 0 1)]
-    [(#\-) (set-state-scale! st (* (state-scale st) 0.9))]
-    [(#\=) (set-state-scale! st (* (state-scale st) 1.1))]
-    [(escape) (set-state-mode! st 'quit)]
-    [(#\space) (set-state-mode! st 'set)]
-    [(#\tab) (printf "~s~n" st) st]
-    [(#\return) (write-layout "out.scm" (state-layers st))]
-    [(release) #f]
-    [else (printf "~s~n" keycode) st]))
-
 (define (key-for keycode)
   (case keycode
     [(control) "ctrl"]
@@ -143,6 +128,7 @@
     [(#\space) "spc"]
     [(#\backspace) "bksp"]
     [(#\return) "enter"]
+    [(#f) #f]
     [else (format "~a" keycode)]))
 
 (define (handle-set st keycode)
@@ -150,6 +136,26 @@
     (set-state-mode! st 'select)
     (vector-set! (vector-ref (state-layers st) (state-layer st))
                  (selected st) (key-for keycode))))
+
+(define (move st dx dy)
+  (set-state-row! st (modulo (+ dy (state-row st)) rows))
+  (set-state-col! st (modulo (+ dx (state-col st)) cols)))
+
+(define (handle-select st keycode)
+  (case keycode
+    [(right) (move st 1 0)]
+    [(left) (move st -1 0)]
+    [(up) (move st 0 -1)]
+    [(down) (move st 0 1)]
+    [(#\-) (set-state-scale! st (* (state-scale st) 0.9))]
+    [(#\=) (set-state-scale! st (* (state-scale st) 1.1))]
+    [(#\backspace) (handle-set st #f)]
+    [(escape) (set-state-mode! st 'quit)]
+    [(#\space) (set-state-mode! st 'set)]
+    [(#\tab) (printf "~s~n" st) st]
+    [(#\return) (write-layout "out.scm" (state-layers st))]
+    [(release) #f]
+    [else (printf "~s~n" keycode) st]))
 
 (define (handle-key canvas st keycode)
   (case (state-mode st)
@@ -162,6 +168,7 @@
 (define (main)
   (let ([frame (new frame% [label "Menelaus Keyboard Layout Editor"])]
         [st (state (vector (make-vector (* rows cols) #f)
+                           (make-vector (* rows cols) #f)
                            (make-vector (* rows cols) #f)) 0 0 0 'select 2.5)])
     (new (class canvas%
            (define/override (on-char event)
