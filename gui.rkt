@@ -5,9 +5,7 @@
 ;; TODO:
 ;; * enter any arbitrary key by name
 ;; * save/load layouts
-;; * emit microscheme
-
-(define call-c-func void) ; for microscheme compatibility
+;; * keycode translation
 
 (include "keycodes.scm")
 
@@ -18,7 +16,7 @@
 (define rows 4)
 (define angle (degrees->radians 10))
 
-;; Drawing
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Drawing
 
 (define alps-switch-width 15.34)
 (define alps-switch-height 12.49)
@@ -78,11 +76,37 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Output
 
-(define (write-layout filename)
+(define prelude
+  '((include "keycodes.scm")
+    (define rows (list 0 1 2 3))
+    (define columns (list 0 1 2 3 4 5 6 7 8 9 10))
+    (define row-pins (vector 3 2 1 0))
+    (define column-pins (vector 6 5 9 8 7 4 10 19 18 12 11))
+    (define layers #f)
+    (define current-layer #f)
+    (define momentary-layer #f)
+
+    (define (fn on?) (set! momentary-layer (and on? (vector-ref layers 1))))
+    (define (set-layer n)
+      (lambda (_) (set! current-layer (vector-ref layers n))))))
+
+(define postlude
+  '((set! current-layer (vector-ref layers 0))
+    (include "menelaus.scm")))
+
+(define (racket-key->ms-key key)
+  'key-a)
+
+(define (layers-form layers)
+  `((set! layers (vector ,@(for/list ([layer layers])
+                             `(vector ,@(for/list ([key layer])
+                                          (racket-key->ms-key key))))))))
+
+(define (write-layout filename layers)
   (when (file-exists? filename) (delete-file filename))
   (call-with-output-file filename
     (λ (op)
-      (for ([f forms])
+      (for ([f (append prelude (layers-form layers) postlude)])
         (pretty-print f op 1)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Updating
@@ -100,9 +124,9 @@
     [(#\-) (set-state-scale! st (* (state-scale st) 0.9))]
     [(#\=) (set-state-scale! st (* (state-scale st) 1.1))]
     [(escape) (set-state-mode! st 'quit)]
-    [(#\return) (set-state-mode! st 'set)]
+    [(#\space) (set-state-mode! st 'set)]
     [(#\tab) (printf "~s~n" st) st]
-    [(#\space) (write-layout "out.scm")]
+    [(#\return) (write-layout "out.scm" (state-layers st))]
     [(release) #f]
     [else (printf "~s~n" keycode) st]))
 
@@ -137,7 +161,8 @@
 
 (define (main)
   (let ([frame (new frame% [label "Menelaus Keyboard Layout Editor"])]
-        [st (state (vector (make-vector (* rows cols) #f)) 0 0 0 'select 2.5)])
+        [st (state (vector (make-vector (* rows cols) #f)
+                           (make-vector (* rows cols) #f)) 0 0 0 'select 2.5)])
     (new (class canvas%
            (define/override (on-char event)
              (handle-key this st (send event get-key-code))
