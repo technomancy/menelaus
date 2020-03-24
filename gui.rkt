@@ -254,9 +254,14 @@
                      (send dia show #f))])
     (send dia show #t)))
 
+(define (non-existent-key? row col)
+  (and (< row 2) (or (= col 5) (= col 6))))
+
 (define (move st dx dy)
   (set-state-row! st (modulo (+ dy (state-row st)) rows))
-  (set-state-col! st (modulo (+ dx (state-col st)) cols)))
+  (set-state-col! st (modulo (+ dx (state-col st)) cols))
+  (when (non-existent-key? (state-row st) (state-col st))
+    (move st dx dy)))
 
 (define (change-layer st dir)
   (set-state-layer! st (modulo (+ dir (state-layer st))
