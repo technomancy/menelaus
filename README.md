@@ -1,5 +1,11 @@
 # Menelaus
 
+## This project has [moved to sourcehut](https://git.sr.ht/~technomancy/menelaus).
+
+Please update your links and stuff.
+
+## Intro
+
 A firmware for the
 [Atreus](http://atreus.technomancy.us) keyboard, written in
 [Microscheme](https://ryansuchocki.github.io/microscheme/).
